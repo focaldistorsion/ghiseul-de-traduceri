@@ -1,6 +1,6 @@
 # Ghișeul de Traduceri
 
-Site static de prezentare, versiunea 0.4.1. Fișierele publicate se află în `dist/`.
+Site static de prezentare, versiunea 0.4.2. Fișierele publicate se află în `dist/`.
 
 Previzualizare locală: deschide `dist/index.html` sau rulează un server static în directorul `dist`.
 
