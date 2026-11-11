@@ -58,3 +58,31 @@ addFile.addEventListener('click', () => {
   input.focus();
 });
 updateRows();
+
+const panels = [...document.querySelectorAll('.wizard-panel')];
+const progress = [...document.querySelectorAll('.wizard-progress li')];
+const back = document.querySelector('#step-back');
+const next = document.querySelector('#step-next');
+const stepTitle = document.querySelector('#step-title');
+const stepCount = document.querySelector('#step-count');
+const stepTitles = ['Datele tale', 'Documentele', 'Detalii și termen', 'Verifică dosarul'];
+let currentStep = 0;
+function showStep(step) {
+  currentStep = step;
+  panels.forEach((panel, index) => { panel.hidden = index !== step; });
+  progress.forEach((item, index) => {
+    if (index === step) item.setAttribute('aria-current', 'step');
+    else item.removeAttribute('aria-current');
+    item.classList.toggle('complete', index < step);
+  });
+  stepTitle.textContent = stepTitles[step];
+  stepCount.textContent = `0${step + 1} / 04`;
+  back.hidden = step === 0;
+  next.hidden = step === panels.length - 1;
+  if (step === 3) {
+    const selected = [...rows.querySelectorAll('input[type=file]')].filter(input => input.files.length).length;
+    document.querySelector('#summary-files').textContent = selected ? `${selected} ${selected === 1 ? 'document selectat' : 'documente selectate'} pentru previzualizare.` : 'Niciun document selectat.';
+  }
+}
+back.addEventListener('click', () => showStep(Math.max(0, currentStep - 1)));
+next.addEventListener('click', () => showStep(Math.min(panels.length - 1, currentStep + 1)));
