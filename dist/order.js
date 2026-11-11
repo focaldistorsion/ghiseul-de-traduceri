@@ -1,60 +1,60 @@
-const input = document.querySelector('#documents');
-const list = document.querySelector('#upload-list');
+const rows = document.querySelector('#file-rows');
+const addFile = document.querySelector('#add-file');
 const status = document.querySelector('#upload-status');
-let files = [];
+let nextId = 2;
 
-function renderFiles() {
-  list.replaceChildren();
-  for (const [index, file] of files.entries()) {
-    const row = document.createElement('li');
-    const icon = document.createElement('span');
-    icon.className = 'file-icon';
-    icon.textContent = '▤';
-    icon.setAttribute('aria-hidden', 'true');
-    const info = document.createElement('span');
-    info.className = 'file-info';
-    const name = document.createElement('strong');
-    name.textContent = file.name;
-    const size = document.createElement('small');
-    size.textContent = `${(file.size / 1024 / 1024).toFixed(2)} MB`;
-    info.append(name, size);
-    const remove = document.createElement('button');
-    remove.type = 'button';
-    remove.className = 'file-remove';
-    remove.setAttribute('aria-label', `Elimină ${file.name}`);
-    remove.textContent = '×';
-    remove.addEventListener('click', () => {
-      files.splice(index, 1);
-      syncInput();
-      renderFiles();
-      status.textContent = 'Document eliminat.';
-    });
-    row.append(icon, info, remove);
-    list.append(row);
-  }
+function updateRows() {
+  const entries = [...rows.querySelectorAll('.file-row')];
+  entries.forEach((row, index) => {
+    row.querySelector('.file-title').textContent = `Fișierul ${index + 1}`;
+    const remove = row.querySelector('.remove-file');
+    if (remove) remove.setAttribute('aria-label', `Elimină fișierul ${index + 1}`);
+  });
+  addFile.disabled = entries.length >= 5;
 }
 
-function syncInput() {
-  const selection = new DataTransfer();
-  files.forEach(file => selection.items.add(file));
-  input.files = selection.files;
-}
-
-input.addEventListener('change', () => {
-  const messages = [];
-  for (const file of input.files) {
-    if (!/\.(pdf|jpe?g|png)$/i.test(file.name) || file.size > 10 * 1024 * 1024 || file.size === 0) {
-      messages.push(`${file.name}: acceptăm doar PDF, JPG sau PNG, până la 10 MB.`);
-    } else if (files.some(item => item.name === file.name && item.size === file.size && item.lastModified === file.lastModified)) {
-      messages.push(`${file.name} este deja adăugat.`);
-    } else if (files.length >= 5) {
-      messages.push('Poți selecta cel mult 5 fișiere.');
-      break;
-    } else {
-      files.push(file);
-    }
+rows.addEventListener('change', event => {
+  const input = event.target;
+  if (input.type !== 'file' || !input.files.length) return;
+  const file = input.files[0];
+  if (!/\.(pdf|jpe?g|png)$/i.test(file.name) || !file.size || file.size > 10 * 1024 * 1024) {
+    input.value = '';
+    input.closest('.file-row').querySelector('.file-name').textContent = 'Niciun fișier selectat';
+    status.textContent = 'Selectează un fișier PDF, JPG sau PNG de maximum 10 MB.';
+  } else {
+    input.closest('.file-row').querySelector('.file-name').textContent = file.name;
+    status.textContent = '';
   }
-  syncInput();
-  renderFiles();
-  status.textContent = messages.join(' ') || `${files.length} ${files.length === 1 ? 'document selectat' : 'documente selectate'}.`;
 });
+
+addFile.addEventListener('click', () => {
+  if (rows.children.length >= 5) return;
+  const row = document.createElement('div');
+  row.className = 'file-row';
+  const title = document.createElement('span');
+  title.className = 'file-title';
+  const label = document.createElement('label');
+  label.className = 'choose-file';
+  label.textContent = 'Încarcă fișier';
+  const input = document.createElement('input');
+  input.id = `document-${nextId++}`;
+  input.type = 'file';
+  input.className = 'file-picker';
+  input.name = 'documents';
+  input.accept = '.pdf,.jpg,.jpeg,.png,application/pdf,image/jpeg,image/png';
+  input.setAttribute('aria-describedby', 'file-help upload-status');
+  label.htmlFor = input.id;
+  const remove = document.createElement('button');
+  remove.type = 'button';
+  remove.className = 'remove-file';
+  remove.textContent = 'Elimină';
+  remove.addEventListener('click', () => { row.remove(); updateRows(); status.textContent = 'Câmp eliminat.'; });
+  const filename = document.createElement('span');
+  filename.className = 'file-name';
+  filename.textContent = 'Niciun fișier selectat';
+  row.append(title, label, input, filename, remove);
+  rows.append(row);
+  updateRows();
+  input.focus();
+});
+updateRows();
